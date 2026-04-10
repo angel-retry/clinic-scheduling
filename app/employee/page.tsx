@@ -1,143 +1,187 @@
-"use client";
+import { CalendarDays, FileEdit, MoreHorizontal, Trash2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 
-import { useEffect, useMemo, useState } from "react";
+// 模擬員工資料
+const nurses = [
+	{
+		id: "N001",
+		name: "艾倫",
+		level: "N3",
+		role: "護理師",
+		status: "在職",
+		joinDate: "2023-05-12",
+		avatar: "", // 可放圖片 URL
+		currentHours: 160,
+		requiredHours: 176, // 應排 176 小時
+	},
+	{
+		id: "N002",
+		name: "柯瑞",
+		level: "N1",
+		role: "護理師",
+		status: "請假中",
+		joinDate: "2024-01-20",
+		avatar: "",
+		currentHours: 160,
+		requiredHours: 176, // 應排 176 小時
+	},
+	{
+		id: "N003",
+		name: "杜蘭特",
+		level: "N4",
+		role: "護理長",
+		status: "在職",
+		joinDate: "2020-03-15",
+		avatar: "",
+		currentHours: 177,
+		requiredHours: 176, // 應排 176 小時
+	},
+];
 
-export default function EmployeePage() {
-	const [_loading, _setLoading] = useState(false);
-	const [_employees, _setEmployees] = useState([]);
+// 職級顏色對照
+const levelStyles: Record<string, string> = {
+	N1: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+	N2: "bg-green-100 text-green-700 hover:bg-green-100",
+	N3: "bg-purple-100 text-purple-700 hover:bg-purple-100",
+	N4: "bg-red-100 text-red-700 hover:bg-red-100",
+};
 
-	const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
-
-	const SHIFT_TYPES: Record<string, string> = {
-		E: "bg-green-400 text-white",
-		N: "bg-blue-500 text-white",
-		D: "bg-orange-400 text-white",
-		休: "bg-gray-100 text-gray-400",
-		例: "bg-gray-200 text-gray-500",
-	};
-
-	// 設定狀態，預設為 2026 年 4 月
-	const [year, setYear] = useState(2026);
-	const [month, setMonth] = useState(4);
-
-	// 計算該月天數與每日資訊
-	const daysInfo = useMemo(() => {
-		// 取得該月最後一天 (例如 4月是 30)
-		const daysInMonth = new Date(year, month, 0).getDate();
-
-		return Array.from({ length: daysInMonth }, (_, i) => {
-			const day = i + 1;
-			const dayOfWeek = new Date(year, month - 1, day).getDay();
-			return {
-				day,
-				weekday: WEEKDAYS[dayOfWeek],
-				isWeekend: dayOfWeek === 0 || dayOfWeek === 6, // 標記週末
-			};
-		});
-	}, [year, month, WEEKDAYS]);
-
-	// 切換月份邏輯
-	const _handlePrevMonth = () => {
-		if (month === 1) {
-			setYear(year - 1);
-			setMonth(12);
-		} else {
-			setMonth(month - 1);
-		}
-	};
-
-	const _handleNextMonth = () => {
-		if (month === 12) {
-			setYear(year + 1);
-			setMonth(1);
-		} else {
-			setMonth(month + 1);
-		}
-	};
-
-	useEffect(() => {
-		fetch("/api/employees")
-			.then((res) => res.json())
-			.then((data) => _setEmployees(data));
-	}, []);
-
-	const employees = [
-		{ id: 1, name: "艾倫", totalHours: 176 },
-		{ id: 2, name: "柯瑞", totalHours: 176 },
-		{ id: 3, name: "杜蘭特", totalHours: 168 },
-		{ id: 4, name: "哈登", totalHours: 176 },
-	];
-
+export default function EmployeeListPage() {
 	return (
-		<div className="flex flex-col h-screen bg-gray-50 px-6 pt-5">
-			<h1 className="text-black text-lg">員工列表</h1>
-			<div className="flex-1 overflow-auto">
-				<div className="bg-white border rounded-lg shadow-sm overflow-hidden flex flex-col">
-					<div className="flex overflow-auto">
-						{/* 左側固定員工欄 */}
-						<div className="sticky left-0 z-20 bg-white border-r shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-							<div className="h-12 border-b flex items-center px-4 bg-gray-50">
-								<span className="text-xs font-medium text-gray-400">人員</span>
-							</div>
-							{employees.map((emp) => (
-								<div
-									key={emp.id}
-									className="h-16 border-b flex flex-col justify-center px-4 min-w-[140px]"
-								>
-									<div className="font-bold text-sm">{emp.name}</div>
-									<div className="text-[10px] text-gray-400">
-										{emp.totalHours}h 0h
-									</div>
-								</div>
-							))}
-						</div>
-
-						{/* 右側滾動區域 */}
-						<div className="flex-1">
-							{/* 動態日期標題列 */}
-							<div className="flex h-12 bg-gray-50 border-b">
-								{daysInfo.map((item) => (
-									<div
-										key={item.day}
-										className={`flex-shrink-0 w-10 border-r flex flex-col items-center justify-center text-[10px] ${item.isWeekend ? "bg-red-50" : ""}`}
-									>
-										<span
-											className={`${item.isWeekend ? "text-red-400" : "text-gray-400"} font-medium`}
-										>
-											{item.weekday}
-										</span>
-										<span
-											className={`font-bold ${item.isWeekend ? "text-red-600" : "text-gray-600"}`}
-										>
-											{item.day}
-										</span>
-									</div>
-								))}
-							</div>
-
-							{/* 員工班表格子 */}
-							{employees.map((emp) => (
-								<div key={emp.id} className="flex h-16 border-b">
-									{daysInfo.map((item) => {
-										const mockShift = item.isWeekend ? "休" : "D";
-										return (
-											<div
-												key={item.day}
-												className={`flex-shrink-0 w-10 border-r flex items-center justify-center p-1 group cursor-pointer hover:bg-blue-50 ${item.isWeekend ? "bg-red-50/30" : ""}`}
-											>
-												<div
-													className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-transform group-hover:scale-110 ${SHIFT_TYPES[mockShift]}`}
-												>
-													{mockShift}
-												</div>
-											</div>
-										);
-									})}
-								</div>
-							))}
-						</div>
-					</div>
+		<div className="p-8">
+			<div className="flex justify-between items-center mb-6">
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight">護理人員管理</h1>
+					<p className="text-muted-foreground">
+						管理單位內所有護理人員資訊與排班資格
+					</p>
 				</div>
+				<Button>新增員工</Button>
+			</div>
+
+			<div className="border rounded-lg bg-white shadow-sm">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-[250px]">姓名</TableHead>
+							<TableHead>職級</TableHead>
+							<TableHead>職位</TableHead>
+							<TableHead>狀態</TableHead>
+							<TableHead>工時進度 (本月)</TableHead>
+							<TableHead>到職日期</TableHead>
+							<TableHead className="text-right">操作</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{nurses.map((nurse) => {
+							// 計算百分比
+							const progress = (nurse.currentHours / nurse.requiredHours) * 100;
+							// 如果超過 100%，進度條變紅色提醒
+							const isOvertime = progress > 100;
+
+							return (
+								<TableRow key={nurse.id}>
+									<TableCell className="font-medium">
+										<div className="flex items-center gap-3">
+											<Avatar className="h-8 w-8">
+												<AvatarImage src={nurse.avatar} />
+												<AvatarFallback>{nurse.name[0]}</AvatarFallback>
+											</Avatar>
+											<div>
+												<div className="font-bold">{nurse.name}</div>
+												<div className="text-xs text-gray-400">{nurse.id}</div>
+											</div>
+										</div>
+									</TableCell>
+									<TableCell>
+										<Badge
+											variant="secondary"
+											className={levelStyles[nurse.level]}
+										>
+											{nurse.level}
+										</Badge>
+									</TableCell>
+									<TableCell>{nurse.role}</TableCell>
+									<TableCell>
+										<div className="flex items-center gap-2">
+											<span
+												className={`h-2 w-2 rounded-full ${nurse.status === "在職" ? "bg-green-500" : "bg-orange-500"}`}
+											/>
+											{nurse.status}
+										</div>
+									</TableCell>
+
+									{/* 工時進度欄位 */}
+									<TableCell className="w-[200px]">
+										<div className="space-y-1.5">
+											<div className="flex justify-between text-[10px] font-medium">
+												<span
+													className={
+														isOvertime
+															? "text-red-600 font-bold"
+															: "text-gray-500"
+													}
+												>
+													{nurse.currentHours} / {nurse.requiredHours} h
+												</span>
+												<span className="text-gray-400">
+													{Math.round(progress)}%
+												</span>
+											</div>
+											<Progress
+												value={progress > 100 ? 100 : progress}
+												className={`h-2 ${isOvertime ? "[&>div]:bg-red-500" : ""}`}
+											/>
+										</div>
+									</TableCell>
+
+									<TableCell className="text-gray-500">
+										{nurse.joinDate}
+									</TableCell>
+									<TableCell className="text-right">
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button variant="ghost" className="h-8 w-8 p-0">
+													<MoreHorizontal className="h-4 w-4" />
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuLabel>操作</DropdownMenuLabel>
+												<DropdownMenuItem className="cursor-pointer">
+													<FileEdit className="mr-2 h-4 w-4" /> 編輯資料
+												</DropdownMenuItem>
+												<DropdownMenuItem className="cursor-pointer">
+													<CalendarDays className="mr-2 h-4 w-4" /> 查看班表
+												</DropdownMenuItem>
+												<DropdownMenuItem className="text-red-600 cursor-pointer">
+													<Trash2 className="mr-2 h-4 w-4" /> 刪除員工
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</TableCell>
+								</TableRow>
+							);
+						})}
+					</TableBody>
+				</Table>
 			</div>
 		</div>
 	);

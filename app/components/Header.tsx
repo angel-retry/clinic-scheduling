@@ -39,6 +39,12 @@ export default function Header() {
 					>
 						員工平台
 					</Link>
+					<Link
+						href="/doctors/schedule"
+						className={`transition-colors ${isActive("/doctors/schedule")}`}
+					>
+						醫生平台
+					</Link>
 				</nav>
 			</div>
 
