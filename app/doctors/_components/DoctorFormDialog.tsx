@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createDoctorAction } from "../_actions/create-doctor";
+import { updateDoctorAction } from "../_actions/update-doctors";
 
 // 定義一週的天數與診次時段
 const DAYS = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
@@ -62,14 +63,20 @@ export function DoctorFormDialog({
 	const handleSubmit = async () => {
 		// 1. 整理資料
 		const _payload = {
+			id: initialData?.id, // 編輯就用原 ID
 			name: name,
 			specialty: "一般科",
 			effectiveDate: effectiveDate,
 			schedule: schedule,
 		};
 
-		// 2. 執行 Server Action
-		const _result = await createDoctorAction(_payload);
+		let _result: any;
+
+		if (initialData.id) {
+			_result = await updateDoctorAction(_payload);
+		} else {
+			_result = await createDoctorAction(_payload);
+		}
 
 		if (_result.success) {
 			console.log("儲存醫師資料:", _payload);
