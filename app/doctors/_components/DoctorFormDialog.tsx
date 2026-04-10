@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -41,6 +41,15 @@ export function DoctorFormDialog({
 	const [schedule, setSchedule] = useState<Record<string, boolean>>(
 		initialData?.schedule || {},
 	);
+
+	// 關鍵：當 Dialog 開啟或 initialData 改變時，重設 state
+	useEffect(() => {
+		if (isOpen) {
+			setName(initialData?.name || "");
+			setEffectiveDate(initialData?.effectiveDate || "2026-04-01");
+			setSchedule(initialData?.schedule || {});
+		}
+	}, [isOpen, initialData]);
 
 	const toggleSlot = (day: string, slot: string) => {
 		const key = `${day}-${slot}`;
