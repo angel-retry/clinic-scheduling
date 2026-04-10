@@ -1,20 +1,21 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const SHIFT_TYPES: Record<string, string> = {
-	E: "bg-green-400 text-white",
-	N: "bg-blue-500 text-white",
-	D: "bg-orange-400 text-white",
-	休: "bg-gray-100 text-gray-400",
-	例: "bg-gray-200 text-gray-500",
-};
+export default function EmployeePage() {
+	const [_loading, _setLoading] = useState(false);
+	const [_employees, _setEmployees] = useState([]);
 
-// 星期對照表
-const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+	const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-export default function SchedulePage() {
+	const SHIFT_TYPES: Record<string, string> = {
+		E: "bg-green-400 text-white",
+		N: "bg-blue-500 text-white",
+		D: "bg-orange-400 text-white",
+		休: "bg-gray-100 text-gray-400",
+		例: "bg-gray-200 text-gray-500",
+	};
+
 	// 設定狀態，預設為 2026 年 4 月
 	const [year, setYear] = useState(2026);
 	const [month, setMonth] = useState(4);
@@ -33,10 +34,10 @@ export default function SchedulePage() {
 				isWeekend: dayOfWeek === 0 || dayOfWeek === 6, // 標記週末
 			};
 		});
-	}, [year, month]);
+	}, [year, month, WEEKDAYS]);
 
 	// 切換月份邏輯
-	const handlePrevMonth = () => {
+	const _handlePrevMonth = () => {
 		if (month === 1) {
 			setYear(year - 1);
 			setMonth(12);
@@ -45,7 +46,7 @@ export default function SchedulePage() {
 		}
 	};
 
-	const handleNextMonth = () => {
+	const _handleNextMonth = () => {
 		if (month === 12) {
 			setYear(year + 1);
 			setMonth(1);
@@ -53,6 +54,12 @@ export default function SchedulePage() {
 			setMonth(month + 1);
 		}
 	};
+
+	useEffect(() => {
+		fetch("/api/employees")
+			.then((res) => res.json())
+			.then((data) => _setEmployees(data));
+	}, []);
 
 	const employees = [
 		{ id: 1, name: "艾倫", totalHours: 176 },
@@ -62,31 +69,9 @@ export default function SchedulePage() {
 	];
 
 	return (
-		<div className="flex flex-col h-screen bg-gray-50 text-slate-700">
-			{/* 控制列 */}
-			<div className="flex items-center justify-between px-6 py-4">
-				<div className="flex items-center gap-4">
-					<div className="flex items-center border rounded-md bg-white">
-						<button
-							onClick={handlePrevMonth}
-							className="p-1.5 hover:bg-gray-50 border-r"
-						>
-							<ChevronLeft size={18} />
-						</button>
-						<span className="px-4 font-bold">{`${year}年 ${month}月`}</span>
-						<button
-							onClick={handleNextMonth}
-							className="p-1.5 hover:bg-gray-50 border-l"
-						>
-							<ChevronRight size={18} />
-						</button>
-					</div>
-					{/* 其他按鈕保持不變 */}
-				</div>
-			</div>
-
-			{/* 核心排班表格區 */}
-			<div className="flex-1 overflow-auto px-6 pb-6">
+		<div className="flex flex-col h-screen bg-gray-50 px-6 pt-5">
+			<h1 className="text-black text-lg">員工列表</h1>
+			<div className="flex-1 overflow-auto">
 				<div className="bg-white border rounded-lg shadow-sm overflow-hidden flex flex-col">
 					<div className="flex overflow-auto">
 						{/* 左側固定員工欄 */}
