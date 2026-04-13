@@ -109,11 +109,13 @@ export function DoctorListTable({ doctors, onEdit }: DoctorListTableProps) {
 								</TableCell>
 								<TableCell className="text-right">
 									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button variant="ghost" size="icon">
-												<MoreVertical size={16} />
-											</Button>
-										</DropdownMenuTrigger>
+										<DropdownMenuTrigger
+											render={
+												<Button variant="ghost" size="icon">
+													<MoreVertical size={16} />
+												</Button>
+											}
+										></DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
 											<DropdownMenuItem
 												onClick={() => onEdit(dr)}
