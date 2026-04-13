@@ -1,4 +1,13 @@
-import { CalendarDays, FileEdit, MoreHorizontal, Trash2 } from "lucide-react";
+"use client";
+
+import {
+	CalendarDays,
+	FileEdit,
+	MoreHorizontal,
+	Trash2,
+	UserPlus,
+} from "lucide-react";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,7 +15,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +26,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { EmployeeFormDialog } from "./_components/EmployeeFormDialog";
 
 // 模擬員工資料
 const nurses = [
@@ -65,16 +74,28 @@ const levelStyles: Record<string, string> = {
 };
 
 export default function EmployeeListPage() {
+	const [_isloading, _setIsLoading] = useState(false);
+	const [_employees, _setEmployees] = useState<any[]>([]);
+
+	// 控制 Dialog 是否顯示
+	const [_isDialogOpen, _setIsDialogOpen] = useState(false);
+
+	// 處理點擊「新增」
+	const _handleAdd = () => {
+		_setIsDialogOpen(true);
+	};
+
 	return (
-		<div className="p-8">
-			<div className="flex justify-between items-center mb-6">
+		<div className="p-8 space-y-6">
+			<div className="flex justify-between items-end">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">護理人員管理</h1>
-					<p className="text-muted-foreground">
-						管理單位內所有護理人員資訊與排班資格
-					</p>
+					<h1 className="text-3xl font-bold tracking-tight">護士資料管理</h1>
+					<p className="text-muted-foreground mt-1">編輯、修改護士資料。</p>
 				</div>
-				<Button>新增員工</Button>
+				{/* 點擊觸發新增 */}
+				<Button onClick={_handleAdd} className="flex gap-2">
+					<UserPlus size={18} /> 新增護士
+				</Button>
 			</div>
 
 			<div className="border rounded-lg bg-white shadow-sm">
@@ -158,13 +179,14 @@ export default function EmployeeListPage() {
 									</TableCell>
 									<TableCell className="text-right">
 										<DropdownMenu>
-											<DropdownMenuTrigger asChild>
-												<Button variant="ghost" className="h-8 w-8 p-0">
-													<MoreHorizontal className="h-4 w-4" />
-												</Button>
-											</DropdownMenuTrigger>
+											<DropdownMenuTrigger
+												render={
+													<Button variant="ghost" className="h-8 w-8 p-0">
+														<MoreHorizontal className="h-4 w-4" />
+													</Button>
+												}
+											></DropdownMenuTrigger>
 											<DropdownMenuContent align="end">
-												<DropdownMenuLabel>操作</DropdownMenuLabel>
 												<DropdownMenuItem className="cursor-pointer">
 													<FileEdit className="mr-2 h-4 w-4" /> 編輯資料
 												</DropdownMenuItem>
@@ -182,6 +204,12 @@ export default function EmployeeListPage() {
 						})}
 					</TableBody>
 				</Table>
+
+				{/* --- Dialog 塞在這裡 --- */}
+				<EmployeeFormDialog
+					isOpen={_isDialogOpen}
+					onClose={() => _setIsDialogOpen(false)}
+				/>
 			</div>
 		</div>
 	);
