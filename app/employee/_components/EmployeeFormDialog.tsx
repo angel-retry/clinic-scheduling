@@ -19,6 +19,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { createEmployeeAction } from "../_actions/create-employee";
+import { updateEmployeeAction } from "../_actions/update-doctors";
 
 export function EmployeeFormDialog({
 	isOpen,
@@ -31,12 +32,13 @@ export function EmployeeFormDialog({
 }) {
 	// 狀態管理
 	const [formData, setFormData] = useState({
-		name: "",
-		level: "N1",
-		role: "",
-		status: "在職",
-		requiredHours: 160,
-		joinDate: new Date().toISOString().split("T")[0],
+		id: initialData?.id || "",
+		name: initialData?.name || "",
+		level: initialData?.level || "N1",
+		role: initialData?.role || "",
+		status: initialData?.status || "在職",
+		requiredHours: initialData?.requiredHours || 160,
+		joinDate: initialData?.joinDate || new Date().toISOString().split("T")[0],
 	});
 
 	const [_isloading, _setIsLoading] = useState(false);
@@ -44,6 +46,7 @@ export function EmployeeFormDialog({
 	useEffect(() => {
 		if (isOpen && initialData) {
 			setFormData({
+				id: initialData.id || "",
 				name: initialData.name || "",
 				level: initialData.level || "N1",
 				role: initialData.role || "",
@@ -59,9 +62,16 @@ export function EmployeeFormDialog({
 		console.log("提交員工資料:", formData);
 		const _payload = formData;
 
+		let _result: any;
+
 		try {
 			_setIsLoading(true);
-			const _result = await createEmployeeAction(_payload);
+
+			if (initialData.id) {
+				_result = await updateEmployeeAction(_payload);
+			} else {
+				_result = await createEmployeeAction(_payload);
+			}
 
 			if (_result.success) {
 				alert(`員工資料已儲存`);

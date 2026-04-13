@@ -39,13 +39,24 @@ const levelStyles: Record<string, string> = {
 
 export default function EmployeeListPage() {
 	const [_isloading, _setIsLoading] = useState(false);
+
 	const [_employees, _setEmployees] = useState<any[]>([]);
 
 	// 控制 Dialog 是否顯示
 	const [_isDialogOpen, _setIsDialogOpen] = useState(false);
 
+	// 控制「目前正在編輯」的員工資料（如果是新增，則為 null）
+	const [_editingEmployee, _setEditingEmployee] = useState<any>(null);
+
 	// 處理點擊「新增」
 	const _handleAdd = () => {
+		_setEditingEmployee(null); // 清空資料
+		_setIsDialogOpen(true);
+	};
+
+	// 處理點擊【編輯】
+	const _handleEdit = (employee: any) => {
+		_setEditingEmployee(employee);
 		_setIsDialogOpen(true);
 	};
 
@@ -175,7 +186,10 @@ export default function EmployeeListPage() {
 														}
 													></DropdownMenuTrigger>
 													<DropdownMenuContent align="end">
-														<DropdownMenuItem className="cursor-pointer">
+														<DropdownMenuItem
+															className="cursor-pointer"
+															onClick={() => _handleEdit(nurse)}
+														>
 															<FileEdit className="mr-2 h-4 w-4" /> 編輯資料
 														</DropdownMenuItem>
 														<DropdownMenuItem className="cursor-pointer">
@@ -197,6 +211,7 @@ export default function EmployeeListPage() {
 						<EmployeeFormDialog
 							isOpen={_isDialogOpen}
 							onClose={() => _setIsDialogOpen(false)}
+							initialData={_editingEmployee}
 						/>
 					</div>
 				</div>
