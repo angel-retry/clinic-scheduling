@@ -40,8 +40,8 @@ export default function Header() {
 						員工平台
 					</Link>
 					<Link
-						href="/doctors/schedule"
-						className={`transition-colors ${isActive("/doctors/schedule")}`}
+						href="/doctors"
+						className={`transition-colors ${isActive("/doctors")}`}
 					>
 						醫生平台
 					</Link>
