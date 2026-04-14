@@ -28,8 +28,8 @@ export default function Header() {
 				{/* 次要導覽：使用 Nav-Link 邏輯 */}
 				<nav className="flex items-center gap-4 text-sm border-l pl-6 ml-2 border-gray-200">
 					<Link
-						href="/schedule/settings"
-						className={`transition-colors ${isActive("/schedule/settings")}`}
+						href="/settings/roster"
+						className={`transition-colors ${isActive("/settings/roster")}`}
 					>
 						班別設定
 					</Link>
