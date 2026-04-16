@@ -1,4 +1,3 @@
-"use server";
 // src/app/doctors/_actions/create-doctor.ts
 "use server";
 
