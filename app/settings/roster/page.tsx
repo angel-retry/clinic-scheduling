@@ -90,6 +90,7 @@ export default function ConfigurationPage() {
 					</div>
 					{/* 3. 綁定 handleSave 並處理 Loading 樣式 */}
 					<button
+						type="button"
 						disabled={_isSaving}
 						onClick={_handleSave}
 						className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -175,6 +176,7 @@ export default function ConfigurationPage() {
 							</div>
 
 							<button
+								type="button"
 								onClick={() => removeRole(role.id)}
 								className="p-2 text-slate-300 hover:text-red-500 transition-colors"
 							>
@@ -184,6 +186,7 @@ export default function ConfigurationPage() {
 					))}
 
 					<button
+						type="button"
 						onClick={addRole}
 						className="border-2 border-dashed border-slate-200 rounded-2xl py-4 flex items-center justify-center gap-2 text-slate-400 hover:text-indigo-500 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"
 					>
