@@ -50,13 +50,22 @@ export default function Header() {
 
 			{/* 右側按鈕區維持不變 */}
 			<div className="flex items-center gap-3">
-				<button className="p-2 hover:bg-gray-100 rounded text-gray-500">
+				<button
+					type="button"
+					className="p-2 hover:bg-gray-100 rounded text-gray-500"
+				>
 					<Download size={20} />
 				</button>
-				<button className="flex items-center gap-2 px-4 py-1.5 bg-orange-50 text-orange-600 rounded-md border border-orange-200 text-sm font-medium hover:bg-orange-100 transition-colors">
+				<button
+					type="button"
+					className="flex items-center gap-2 px-4 py-1.5 bg-orange-50 text-orange-600 rounded-md border border-orange-200 text-sm font-medium hover:bg-orange-100 transition-colors"
+				>
 					<Wand2 size={16} /> 生成排班
 				</button>
-				<button className="px-4 py-1.5 bg-slate-800 text-white rounded-md text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm">
+				<button
+					type="button"
+					className="px-4 py-1.5 bg-slate-800 text-white rounded-md text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
+				>
 					發布
 				</button>
 			</div>
