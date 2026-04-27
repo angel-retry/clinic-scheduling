@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getDoctorAction } from "../doctors/_actions/get-doctor";
 import { getEmployeesAction } from "../employee/_actions/get-employee";
 import { getRosterConfig } from "../settings/roster/_action/get-roster";
+import { getShifts } from "../settings/shifts/_actions/get-shifts";
 import { getScheduleAction } from "./_actions/get-schedule";
 import { saveScheduleAction } from "./_actions/save-schedule";
 
@@ -26,10 +27,32 @@ const SHIFT_TYPES: Record<string, string> = {
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 const PERIODS = [
-	{ id: "morning", label: "早" },
-	{ id: "afternoon", label: "午" },
-	{ id: "evening", label: "晚" },
+	{ id: "morning", label: "早", start: "08:00", end: "12:00" },
+	{ id: "afternoon", label: "午", start: "13:30", end: "17:30" },
+	{ id: "evening", label: "晚", start: "18:30", end: "21:30" },
 ];
+
+// 判斷 shiftTime(班別時間) 是否涵蓋了 periodTime(時段標準)
+const _isShiftCoveringPeriod = (
+	shiftStart: string,
+	shiftEnd: string,
+	periodStart: string,
+	periodEnd: string,
+) => {
+	// 將 "HH:mm" 轉為分鐘數進行比較
+	const toMin = (t: string) => {
+		const [h, m] = t.split(":").map(Number);
+		return h * 60 + m;
+	};
+
+	const sStart = toMin(shiftStart);
+	const sEnd = toMin(shiftEnd);
+	const pStart = toMin(periodStart);
+	const pEnd = toMin(periodEnd);
+
+	// 判定邏輯：只要班別的「開始」小於時段的「結束」，且班別的「結束」大於時段的「開始」，即視為有上班
+	return sStart < pEnd && sEnd > pStart;
+};
 
 export default function SchedulePage() {
 	const [year] = useState(2026);
@@ -52,75 +75,84 @@ export default function SchedulePage() {
 	const [_pendingChanges, _setPendingChanges] = useState<Record<string, any>>(
 		{},
 	);
+	const [_shiftConfigs, _setShiftConfigs] = useState<any[]>([]);
 
 	useEffect(() => {
-		_setLoading(true);
 		const _getData = async () => {
-			const [
-				_fetchedRoles,
-				_fetchedDoctors,
-				_fetchedEmployees,
-				_fetchedSchedule,
-			] = await Promise.all([
-				getRosterConfig(),
-				getDoctorAction(),
-				getEmployeesAction(),
-				getScheduleAction(year, _month),
-			]);
+			_setLoading(true);
 
-			if (_fetchedRoles.success) setRoleConfigs(_fetchedRoles.data);
-			setDoctors(_fetchedDoctors || []);
-			const allEmployees = _fetchedEmployees || [];
-			setEmployees(allEmployees);
+			try {
+				const [
+					_fetchedRoles,
+					_fetchedDoctors,
+					_fetchedEmployees,
+					_fetchedSchedule,
+					_fetchedShifts,
+				] = await Promise.all([
+					getRosterConfig(),
+					getDoctorAction(),
+					getEmployeesAction(),
+					getScheduleAction(year, _month),
+					getShifts(),
+				]);
 
-			console.log("Fetched Schedule Data:", _fetchedSchedule);
+				if (_fetchedRoles.success) setRoleConfigs(_fetchedRoles.data);
+				if (_fetchedShifts.success) _setShiftConfigs(_fetchedShifts.data);
+				setDoctors(_fetchedDoctors || []);
 
-			// --- 處理載入後的班表資料還原 ---
-			if (_fetchedSchedule.success && _fetchedSchedule.data.length > 0) {
-				const newGridData: Record<string, Record<number, string>> = {};
-				const activeIds = new Set<string>();
+				const allEmployees = _fetchedEmployees || [];
+				setEmployees(allEmployees);
 
-				_fetchedSchedule.data.forEach((item: any) => {
-					const empId = item.employee_id;
-					const day = parseInt(item.date.slice(-2), 10); // 從 20260401 擷取 01 -> 1
+				console.log("Fetched Schedule Data:", _fetchedSchedule);
 
-					if (!newGridData[empId]) newGridData[empId] = {};
-					newGridData[empId][day] = item.shift_code;
-					activeIds.add(empId);
-				});
+				// --- 處理載入後的班表資料還原 ---
+				if (_fetchedSchedule.success && _fetchedSchedule.data.length > 0) {
+					const newGridData: Record<string, Record<number, string>> = {};
+					const activeIds = new Set<string>();
 
-				_setGridData(newGridData);
-				_setIsPublished(true); // 如果有資料，預設標記為已發布
+					_fetchedSchedule.data.forEach((item: any) => {
+						const empId = item.employee_id;
+						const day = parseInt(item.date.slice(-2), 10); // 從 20260401 擷取 01 -> 1
+						if (!newGridData[empId]) newGridData[empId] = {};
+						newGridData[empId][day] = item.shift_code;
+						activeIds.add(empId);
+					});
 
-				// 根據班表內的 ID，過濾出 _activeEmployees 對象
-				const activeList = allEmployees.filter((emp: any) =>
-					activeIds.has(emp.id),
-				);
-				_setActiveEmployees(activeList);
-			} else {
-				// --- 新增：如果該月份完全沒資料 (例如 2026/05) ---
-				_setGridData({}); // 清空班表格子
-				_setActiveEmployees([]); // 清空當前顯示的員工清單
-				_setIsPublished(false); // 設為草稿狀態
+					_setGridData(newGridData);
+					_setIsPublished(true); // 如果有資料，預設標記為已發布
+					_setActiveEmployees(
+						allEmployees.filter((emp: any) => activeIds.has(emp.id)),
+					);
+				} else {
+					// --- 新增：如果該月份完全沒資料 (例如 2026/05) ---
+					_setGridData({}); // 清空班表格子
+					_setActiveEmployees([]); // 清空當前顯示的員工清單
+					_setIsPublished(false); // 設為草稿狀態
+				}
+			} catch (_error) {
+				console.error("Fetch Data Error:", _error);
+			} finally {
+				_setLoading(false);
 			}
-
-			_setLoading(false);
 		};
+
 		_getData();
 	}, [_month, year]);
 
-	// 1. 人力需求基準計算 (不變)
+	// 1. 人力需求基準計算
 	const scheduleRequirements = useMemo(() => {
 		const requirementMap: Record<
 			string,
 			{ total: number; drCount: number; roles: any[] }
 		> = {};
+
 		WEEKDAYS.forEach((w) => {
 			PERIODS.forEach((p) => {
 				const slotKey = `週${w}-${p.id}`;
 				const drCount = doctors.filter(
 					(dr) => dr.schedule?.[slotKey as keyof typeof dr.schedule] === true,
 				).length;
+
 				let totalNeeded = 0;
 				const roleBreakdown = roleConfigs.map((role) => {
 					const count =
@@ -132,6 +164,7 @@ export default function SchedulePage() {
 					totalNeeded += count;
 					return { label: role.label, count };
 				});
+
 				requirementMap[slotKey] = {
 					total: totalNeeded,
 					drCount,
@@ -142,7 +175,7 @@ export default function SchedulePage() {
 		return requirementMap;
 	}, [doctors, roleConfigs]);
 
-	// 2. 當月日期資訊 (不變)
+	// 2. 當月日期資訊
 	const daysInfo = useMemo(() => {
 		const daysInMonth = new Date(year, _month, 0).getDate();
 		return Array.from({ length: daysInMonth }, (_, i) => {
@@ -161,26 +194,42 @@ export default function SchedulePage() {
 		});
 	}, [year, _month, scheduleRequirements]);
 
-	// 3. 計算目前的實排人數 (實績)
+	// 3. 計算目前的實排人數
 	const actualStaffCount = useMemo(() => {
-		const counts: Record<string, number> = {}; // key: "day-period"
+		const counts: Record<string, number> = {};
+
 		daysInfo.forEach((day) => {
 			PERIODS.forEach((p) => {
 				const key = `${day.day}-${p.id}`;
 				let count = 0;
+
 				_activeEmployees.forEach((emp) => {
-					const shift = _gridData[emp.id]?.[day.day];
-					// 邏輯判斷：如果是 D 班算早/午，E 班算晚，依診所習慣調整
-					if (p.id === "morning" && shift === "D") count++;
-					if (p.id === "afternoon" && shift === "D") count++;
-					if (p.id === "evening" && shift === "E") count++;
-					if (shift === "N") count++; // N 班全天或特定時段
+					const shiftCode = _gridData[emp.id]?.[day.day];
+					if (!shiftCode || shiftCode === "休" || shiftCode === "例") return;
+
+					// 從設定檔中尋找這個班別的詳細時間 (例如 L 班是 08:00~21:30)
+					const config = _shiftConfigs.find((s) => s.code === shiftCode);
+
+					if (config?.start_time && config.end_time) {
+						// 動態判定該班別的時間是否涵蓋了目前的時段 (早、午或晚)
+						if (
+							_isShiftCoveringPeriod(
+								config.start_time,
+								config.end_time,
+								p.start,
+								p.end,
+							)
+						) {
+							count++;
+						}
+					}
 				});
+
 				counts[key] = count;
 			});
 		});
 		return counts;
-	}, [_activeEmployees, _gridData, daysInfo]);
+	}, [_activeEmployees, _gridData, daysInfo, _shiftConfigs]);
 
 	// --- 動作處理 ---
 	const handleAddStaff = (staff: any) => {
@@ -226,14 +275,19 @@ export default function SchedulePage() {
 	const toggleShift = (empId: string, day: number) => {
 		if (_isPublished) return;
 
-		const shifts = Object.keys(SHIFT_TYPES);
+		// 動態獲取所有可用的班別代號 (例如: ["D", "E", "N", "休"])
+		const availableCodes = _shiftConfigs.map((s) => s.code);
+		if (!availableCodes.includes("休")) availableCodes.push("休");
+
+		// const shifts = Object.keys(SHIFT_TYPES);
 		const _dateStr = `${year}${_month.toString().padStart(2, "0")}${day.toString().padStart(2, "0")}`;
 		const _recordId = `${_dateStr}_${empId}`;
 
 		_setGridData((prev) => {
 			const currentShift = prev[empId]?.[day] || "休";
-			const nextIndex = (shifts.indexOf(currentShift) + 1) % shifts.length;
-			const _nextShift = shifts[nextIndex];
+			const nextIndex =
+				(availableCodes.indexOf(currentShift) + 1) % availableCodes.length;
+			const _nextShift = availableCodes[nextIndex];
 
 			// 更新 pendingChanges
 			_setPendingChanges((prevChanges) => ({
@@ -404,6 +458,9 @@ export default function SchedulePage() {
 												{daysInfo.map((day) => {
 													const currentShift =
 														_gridData[emp.id]?.[day.day] || "休";
+													const _config = _shiftConfigs.find(
+														(s) => s.code === currentShift,
+													);
 													return (
 														<td
 															key={day.day}
@@ -414,13 +471,21 @@ export default function SchedulePage() {
 																	toggleShift(emp.id, day.day);
 																}
 															}}
-															className={`p-1 border-b border-r text-center transition-all ${
-																!day.hasClinic
-																	? "bg-gray-50/50"
-																	: "cursor-pointer hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-															}`}
+															className={`p-1 border-b border-r text-center transition-all ${!_isPublished && "cursor-pointer hover:bg-white"}`}
 														>
 															<div
+																style={{
+																	backgroundColor:
+																		_config?.bg_color ||
+																		(currentShift === "休"
+																			? "#f1f5f9"
+																			: "#e2e8f0"),
+																	color:
+																		_config?.text_color ||
+																		(currentShift === "休"
+																			? "#94a3b8"
+																			: "#475569"),
+																}}
 																className={`w-9 h-9 mx-auto rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-transform active:scale-90 ${SHIFT_TYPES[currentShift]}`}
 															>
 																{currentShift}
