@@ -34,6 +34,12 @@ export default function Header() {
 						班別設定
 					</Link>
 					<Link
+						href="/settings/shifts"
+						className={`transition-colors ${isActive("/settings/shifts")}`}
+					>
+						班別代號管理
+					</Link>
+					<Link
 						href="/employee"
 						className={`transition-colors ${isActive("/employee")}`}
 					>
