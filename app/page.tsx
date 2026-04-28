@@ -21,7 +21,9 @@ export default function Home() {
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke="currentColor"
+							role="img"
 						>
+							<title>日曆圖示</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -49,16 +51,18 @@ export default function Home() {
 
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
-								className="h-5 w-5 flex-shrink-0 transform group-hover:translate-x-1 transition-transform"
+								className="h-10 w-10 text-white"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
+								role="img" // 告訴瀏覽器這是一個圖示
 							>
+								<title>日曆圖示</title> {/* 加上這個就不會報錯了 */}
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
 									strokeWidth={2}
-									d="M13 7l5 5m0 0l-5 5m5-5H6"
+									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
 								/>
 							</svg>
 						</Link>
